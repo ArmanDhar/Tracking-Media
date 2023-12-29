@@ -1,0 +1,42 @@
+import pandas as pd
+import requests
+
+# Read the CSV file into a DataFrame
+movies_df = pd.read_csv('your_movie_list.csv')
+
+# Function to get streaming platforms for a movie
+def get_streaming_info(movie_title):
+    api_key = 'YOUR_TMDB_API_KEY'
+    base_url = 'https://api.themoviedb.org/3/search/movie'
+
+    params = {
+        'api_key': api_key,
+        'query': movie_title
+    }
+
+    response = requests.get(base_url, params=params)
+    if response.status_code == 200:
+        results = response.json()['results']
+        if results:
+            movie_id = results[0]['id']
+            streaming_url = f'https://api.themoviedb.org/3/movie/{movie_id}/watch/providers'
+            streaming_params = {'api_key': api_key}
+            streaming_response = requests.get(streaming_url, params=streaming_params)
+            if streaming_response.status_code == 200:
+                streaming_info = streaming_response.json()['results']
+                return streaming_info
+    return None
+
+# Iterate through movies and get streaming info
+for index, row in movies_df.iterrows():
+    movie_title = row['MovieTitleColumn']  # Replace with your column name
+    streaming_info = get_streaming_info(movie_title)
+    if streaming_info:
+        print(f"Movie: {movie_title}")
+        print("Streaming Info:")
+        for provider in streaming_info:
+            print(f"- {provider['provider_name']}: {provider['provider_id']}")
+        print("-----------------------")
+    else:
+        print(f"No streaming info found for {movie_title}")
+
